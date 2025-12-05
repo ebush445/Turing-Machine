@@ -1,50 +1,59 @@
 package dev.ericbush;
 
 /**
- * A PrintHead
+ * Class for a Turing Machine
  */
-public class PrintHead {
+public class TuringMachine {
   private Tape tape;
   private Instructions instructions;
   private int currentState = 0;
-  private int currentHeadPosition = 0;
 
-  // Constructor for PrintHead
-  public PrintHead(Instructions instructions, Tape tape){
+  // Constructor
+  public TuringMachine(Instructions instructions, Tape tape){
     this.tape = tape;
     this.instructions = instructions;
   }
 
   /**
    * Runs the Turing Machine
-   * @return the resulting tape
+   * @return true if machine would halt, otherwise false
    */
-  public Tape execute() {
+  public boolean run() {
+    // Run while not in a halting state
     while (currentState != instructions.haltingState()) {
-      char currentChar = tape.read(currentHeadPosition);
+      char currentChar = tape.read();
+      boolean isMachineStuck = true;
 
-      for (Transition t : instructions.transitions()) {
-        if (t.getStartingState() == currentState && t.getRead() == currentChar) {
-          tape.write(currentHeadPosition, t.getWrite());
-          System.out.println(currentState + " -> " + t.getEndingState() + " on input " + currentChar + " " + currentHeadPosition);
-          currentState = t.getEndingState();
+      // loop through each possible transition
+      for (Transition transition : instructions.transitions()) {
 
-          System.out.println(tape.toString());
+        // check if the transition matches given the starting state, char read from tape
+        if (transition.startingState() == currentState && transition.read() == currentChar) {
+          isMachineStuck = false;
 
-
-          if (t.getMove() == 'R'){
-            currentHeadPosition++;
-            System.out.println("Move Right");
-          }
-          else if (t.getMove() == 'L') {
-            currentHeadPosition--;
-            System.out.println("Move Left");
-          }
-          tape.setHeadPosition(currentHeadPosition);
+          // write to the tape
+          tape.write(transition.write());
+          // move to next state
+          currentState = transition.endingState();
+          // Print current results
+          System.out.println(this.toString());
+          // Move the tape
+          tape.moveTape(transition.move());
           break;
         }
       }
+      if (isMachineStuck) {
+        return false;
+      }
     }
-    return tape;
+    return true;
+  }
+
+  /**
+   * @return the current state and the tape reading as a String
+   */
+  @Override
+  public String toString() {
+    return currentState + ":  " + tape.toString();
   }
 }
